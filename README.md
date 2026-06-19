@@ -1,0 +1,77 @@
+# kurzwahl2mqtt
+
+FreePBX module that turns short dial codes into HTTP/MQTT actions with optional voice announcement.
+
+**Dial `8` + code → fires action → plays announcement → hangs up.**
+
+Example: dial `86736` (= `8` + `OPEN` on keypad) → posts to MQTT topic `home/door/trigger` → flite speaks "Tür wurde geöffnet".
+
+## Features
+
+- Configure any number of speed dial codes via FreePBX GUI
+- Action types: **MQTT publish**, **HTTP GET**, **HTTP POST** (with custom headers)
+- Announcement types: **TTS via flite**, **pre-recorded sound file**, or **none**
+- `{CODE}` placeholder in payload is replaced with the dialed digits
+- Configurable prefix (default: `8`), MQTT broker credentials
+- Apply Config button regenerates `/etc/asterisk/kurzwahl2mqtt.json` on demand
+
+## Requirements
+
+| Tool | Purpose | Install |
+|---|---|---|
+| `jq` | Parse config in AGI script | `apt install jq` |
+| `mosquitto-clients` | MQTT publish | `apt install mosquitto-clients` |
+| `flite` | TTS announcements | `apt install flite` |
+| FreePBX 17 | Module framework | — |
+| Asterisk 22 | AGI + dialplan | — |
+
+## Installation
+
+```bash
+git clone https://github.com/dajuly20/freepbx-kurzwahl2mqtt
+cd freepbx-kurzwahl2mqtt
+sudo ./install.sh
+```
+
+## Usage
+
+1. FreePBX GUI → **Admin → Kurzwahl2MQTT**
+2. Click **+ Add Entry**
+3. Fill in code, action, and announcement
+4. Click **Apply Config** → run `asterisk -rx "dialplan reload"` once
+5. Dial `<prefix><code>` from any extension
+
+## Keypad mapping (for vanity codes)
+
+```
+A B C → 2    D E F → 3    G H I → 4
+J K L → 5    M N O → 6    P Q R S → 7
+T U V → 8    W X Y Z → 9
+```
+
+`OPEN` = O(6) P(7) E(3) N(6) → `6736` → dial `86736`
+
+## How it works
+
+```
+Caller dials 86736
+  → Asterisk matches pattern _8. in [from-internal-custom]
+  → Calls agi-bin/kurzwahl2mqtt.sh with arg "6736"
+  → AGI reads /etc/asterisk/kurzwahl2mqtt.json
+  → Fires configured action (MQTT/HTTP)
+  → Plays announcement (TTS/file/none)
+  → Hangs up
+```
+
+## File layout
+
+```
+/var/www/html/admin/modules/kurzwahl2mqtt/   FreePBX module
+/var/lib/asterisk/agi-bin/kurzwahl2mqtt.sh   AGI runtime
+/etc/asterisk/kurzwahl2mqtt.json             Generated config
+/etc/asterisk/kurzwahl2mqtt_dialplan.conf    Generated dialplan
+```
+
+## License
+
+GPLv3

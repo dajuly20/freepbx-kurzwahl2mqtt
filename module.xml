@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+    <rawname>kurzwahl2mqtt</rawname>
+    <repo>standard</repo>
+    <name>Kurzwahl2MQTT</name>
+    <version>1.0.0</version>
+    <publisher>Julian</publisher>
+    <license>GPLv3</license>
+    <licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+    <type>setup</type>
+    <category>Admin</category>
+    <description>
+        <en-US>Speed dial codes (8+digits) that trigger HTTP GET/POST or MQTT actions, with optional TTS or audio file announcement. Configure via FreePBX GUI.</en-US>
+    </description>
+    <changelog>
+        <en-US>* 1.0.0: Initial release</en-US>
+    </changelog>
+    <supported>
+        <version>17.0</version>
+    </supported>
+    <depends>
+        <version>17.0</version>
+    </depends>
+    <menuitems>
+        <kurzwahl2mqtt>Kurzwahl2MQTT</kurzwahl2mqtt>
+    </menuitems>
+</module>
