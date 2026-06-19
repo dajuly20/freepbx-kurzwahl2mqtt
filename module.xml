@@ -12,9 +12,7 @@
     <description>
         <en-US>Speed dial codes (8+digits) that trigger HTTP GET/POST or MQTT actions, with optional TTS or audio file announcement. Configure via FreePBX GUI.</en-US>
     </description>
-    <changelog>
-        <en-US>* 1.0.0: Initial release</en-US>
-    </changelog>
+    <changelog>* 1.0.0: Initial release
     <supported>
         <version>17.0</version>
     </supported>
