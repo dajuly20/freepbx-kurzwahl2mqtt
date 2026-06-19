@@ -59,14 +59,22 @@ else
     ok "Created extensions_custom.conf"
 fi
 
-# ── FreePBX module install ────────────────────────────────────────────────────
-echo "Installing module via fwconsole…"
-fwconsole ma install kurzwahl2mqtt
-fwconsole reload
-ok "Module installed and FreePBX reloaded"
+# ── FreePBX module register ───────────────────────────────────────────────────
+echo "Registering module…"
+# Try fwconsole ma install first; fall back to reload-only if it fails
+if fwconsole ma install kurzwahl2mqtt 2>&1 | grep -qiE "error|exception|unable"; then
+    warn "'fwconsole ma install' failed — falling back to chown + reload"
+fi
+fwconsole chown --quiet 2>/dev/null || true
+fwconsole reload 2>&1 | tail -3
+ok "FreePBX reloaded"
 
 echo ""
-echo -e "${GREEN}Done!${NC} Open FreePBX → Admin → Kurzwahl2MQTT to add entries."
-echo "After adding entries, click 'Apply Config' in the module UI, then run:"
+echo -e "${GREEN}Done!${NC}"
+echo "→ FreePBX GUI → Admin → Module Admin → scroll to 'Kurzwahl2MQTT' → Install"
+echo "  (if it doesn't appear, try: fwconsole ma list | grep kurzwahl)"
+echo ""
+echo "After installing via GUI, add entries under Admin → Kurzwahl2MQTT,"
+echo "click 'Apply Config', then run:"
 echo "  asterisk -rx 'dialplan reload'"
 echo ""

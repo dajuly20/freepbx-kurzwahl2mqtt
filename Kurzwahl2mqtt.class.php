@@ -1,7 +1,5 @@
 <?php
-namespace FreePBX\modules\Kurzwahl2mqtt;
-
-class Kurzwahl2mqtt extends \FreePBX_Helpers implements \BMO {
+class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
 
     public function install() {
         $this->db->exec("CREATE TABLE IF NOT EXISTS kurzwahl2mqtt_entries (
@@ -50,7 +48,7 @@ class Kurzwahl2mqtt extends \FreePBX_Helpers implements \BMO {
     public function getEntries() {
         return $this->db->query(
             "SELECT * FROM kurzwahl2mqtt_entries ORDER BY code"
-        )->fetchAll(\PDO::FETCH_ASSOC);
+        )->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getEntry($id) {
@@ -58,7 +56,7 @@ class Kurzwahl2mqtt extends \FreePBX_Helpers implements \BMO {
             "SELECT * FROM kurzwahl2mqtt_entries WHERE id = ?"
         );
         $sth->execute([$id]);
-        return $sth->fetch(\PDO::FETCH_ASSOC);
+        return $sth->fetch(PDO::FETCH_ASSOC);
     }
 
     public function saveEntry($data) {
@@ -94,7 +92,7 @@ class Kurzwahl2mqtt extends \FreePBX_Helpers implements \BMO {
     public function getSettings() {
         $rows = $this->db->query(
             "SELECT `key`, `value` FROM kurzwahl2mqtt_settings"
-        )->fetchAll(\PDO::FETCH_ASSOC);
+        )->fetchAll(PDO::FETCH_ASSOC);
         return array_column($rows, 'value', 'key');
     }
 
