@@ -33,6 +33,74 @@ cd freepbx-kurzwahl2mqtt
 sudo ./install.sh
 ```
 
+## First Use (step by step)
+
+### 1. Install the module
+
+```bash
+git clone https://github.com/dajuly20/freepbx-kurzwahl2mqtt
+cd freepbx-kurzwahl2mqtt
+sudo ./install.sh
+```
+
+The script installs the AGI script, copies the module into FreePBX, and reloads the dialplan. Watch for any errors — `jq`, `mosquitto-clients`, and `flite` must be installed first (see Requirements above).
+
+### 2. Configure the MQTT broker
+
+FreePBX GUI → **Admin → Kurzwahl2MQTT → Settings**
+
+| Field | What to enter |
+|---|---|
+| **Prefix digit(s)** | The digit callers dial before their code. Default: `8` |
+| **Host** | IP or hostname of your MQTT broker (e.g. your Home Assistant host) |
+| **Port** | Usually `1883` (or `8883` for TLS) |
+| **Username / Password** | Leave empty if your broker has no auth |
+
+Click **Save & Apply**.
+
+> The module uses `mosquitto_pub` to publish — it does **not** include a broker. You need an existing MQTT broker (Mosquitto, Home Assistant's built-in broker, etc.).
+
+### 3. Add your first speed dial entry
+
+FreePBX GUI → **Admin → Kurzwahl2MQTT → + Add Entry**
+
+Example — a door-open button:
+
+| Field | Value |
+|---|---|
+| **Code** | `6736` (= OPEN on keypad) |
+| **Label** | `Haustür öffnen` |
+| **Action type** | `mqtt` |
+| **Topic** | `home/door/trigger` |
+| **Payload** | `{"action":"open","code":"{CODE}"}` |
+| **Announcement** | TTS → `Tür wird geöffnet` |
+| **Enabled** | ✓ |
+
+Click **Save**, then **Apply Config**.
+
+> `{CODE}` in the payload is replaced with the dialed digits at runtime.
+
+### 4. Reload the dialplan
+
+After the first install (or after changing the prefix), reload Asterisk once:
+
+```bash
+asterisk -rx "dialplan reload"
+```
+
+Subsequent **Apply Config** clicks in the GUI regenerate the config file — no reload needed for adding/editing entries.
+
+### 5. Test it
+
+Pick up any internal extension and dial **`8`** + your code (e.g. `86736`). You should hear the announcement and see the MQTT message arrive on your broker.
+
+To monitor MQTT traffic:
+```bash
+mosquitto_sub -h <broker-host> -t '#' -v
+```
+
+---
+
 ## Usage
 
 1. FreePBX GUI → **Admin → Kurzwahl2MQTT**
