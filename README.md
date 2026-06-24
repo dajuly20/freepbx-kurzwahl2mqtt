@@ -27,11 +27,38 @@ Example: dial `86736` (= `8` + `OPEN` on keypad) → posts to MQTT topic `home/d
 
 ## Installation
 
+### Prerequisites
+
+Install the required system packages on your FreePBX/Asterisk host:
+
+```bash
+apt install jq mosquitto-clients flite
+```
+
+### Install the module
+
 ```bash
 git clone https://github.com/dajuly20/freepbx-kurzwahl2mqtt
 cd freepbx-kurzwahl2mqtt
 sudo ./install.sh
 ```
+
+The installer will:
+- Copy the AGI script to `/var/lib/asterisk/agi-bin/`
+- Copy the module to `/var/www/html/admin/modules/kurzwahl2mqtt/`
+- Add `#include kurzwahl2mqtt_dialplan.conf` to `extensions_custom.conf`
+- Register the module in FreePBX (`fwconsole ma install`)
+- Reload FreePBX and the Asterisk dialplan
+
+### Uninstall
+
+```bash
+sudo ./uninstall.sh
+```
+
+### Re-running the installer
+
+`install.sh` is idempotent — it cleans up any previous install before reinstalling, so you can run it again safely after updates.
 
 ## First Use (step by step)
 
