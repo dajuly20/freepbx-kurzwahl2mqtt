@@ -54,8 +54,11 @@
       return obj;
     }, {});
     fpbxAjax('saveSettings', data, function (res) {
-      alert(res.status ? '✓ ' + res.message : 'Error: ' + res.message);
-      if (res.status) location.reload();
+      if (res.status) {
+        window.location.href = '?display=kurzwahl2mqtt';
+      } else {
+        alert('Error: ' + res.message);
+      }
     });
   });
 
