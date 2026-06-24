@@ -10,10 +10,6 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
             action_target TEXT,
             action_payload TEXT,
             action_headers TEXT,
-            mqtt_host VARCHAR(255) DEFAULT NULL,
-            mqtt_port SMALLINT UNSIGNED DEFAULT NULL,
-            mqtt_user VARCHAR(100) DEFAULT NULL,
-            mqtt_pass VARCHAR(100) DEFAULT NULL,
             announce_type ENUM('none','tts','file') NOT NULL DEFAULT 'none',
             announce_value TEXT,
             enabled TINYINT(1) NOT NULL DEFAULT 1,
@@ -65,8 +61,7 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
 
     public function saveEntry($data) {
         $fields = ['code','label','action_type','action_target','action_payload',
-                   'action_headers','mqtt_host','mqtt_port','mqtt_user','mqtt_pass',
-                   'announce_type','announce_value','enabled'];
+                   'action_headers','announce_type','announce_value','enabled'];
         $values = array_map(fn($f) => $data[$f] ?? '', $fields);
 
         if (!empty($data['id'])) {
@@ -136,10 +131,6 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
                 'action_payload' => $e['action_payload'],
                 'action_headers' => $e['action_headers']
                     ? json_decode($e['action_headers'], true) : (object)[],
-                'mqtt_host'      => $e['mqtt_host'] ?: null,
-                'mqtt_port'      => $e['mqtt_port'] ? (int)$e['mqtt_port'] : null,
-                'mqtt_user'      => $e['mqtt_user'] ?: null,
-                'mqtt_pass'      => $e['mqtt_pass'] ?: null,
                 'announce_type'  => $e['announce_type'],
                 'announce_value' => $e['announce_value'],
             ];

@@ -67,7 +67,6 @@
 
     $('#row-payload').toggle(isHttp || type === 'mqtt');
     $('#row-headers').toggle(isPost);
-    $('#row-mqtt-overrides').toggle(type === 'mqtt');
     $('#target-label').text(type === 'mqtt' ? 'MQTT Topic' : 'URL');
 
     if (type === 'mqtt') {
