@@ -60,4 +60,4 @@ $v = fn($k, $d = '') => htmlspecialchars($settings[$k] ?? $d);
   </form>
 </div>
 
-<script src="assets/js/kurzwahl2mqtt.js"></script>
+<script src="modules/kurzwahl2mqtt/assets/js/kurzwahl2mqtt.js"></script>

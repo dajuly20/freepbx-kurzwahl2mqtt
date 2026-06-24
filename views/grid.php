@@ -51,4 +51,4 @@ $baseUrl = '?display=kurzwahl2mqtt';
   </div>
 </div>
 
-<script src="assets/js/kurzwahl2mqtt.js"></script>
+<script src="modules/kurzwahl2mqtt/assets/js/kurzwahl2mqtt.js"></script>
