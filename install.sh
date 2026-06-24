@@ -71,6 +71,16 @@ else
     ok "Created extensions_custom.conf"
 fi
 
+# ── Pre-create config files owned by asterisk ────────────────────────────────
+# Without this, fwconsole (running as root) creates them owned by root and the
+# Apache worker (running as asterisk) can't overwrite them on Apply Config.
+for f in /etc/asterisk/kurzwahl2mqtt.json /etc/asterisk/kurzwahl2mqtt_dialplan.conf; do
+    [[ -f "$f" ]] || touch "$f"
+    chown asterisk:asterisk "$f"
+    chmod 664 "$f"
+done
+ok "Config files pre-created with asterisk ownership"
+
 # ── FreePBX module register ───────────────────────────────────────────────────
 echo "Registering module…"
 fwconsole ma install kurzwahl2mqtt 2>&1
