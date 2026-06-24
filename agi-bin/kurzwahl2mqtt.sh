@@ -57,11 +57,11 @@ ANNOUNCE_VALUE=$(echo "$ENTRY" | jq -r '.announce_value // ""')
 # Replace {CODE} placeholder in payload
 ACTION_PAYLOAD="${ACTION_PAYLOAD//\{CODE\}/$CODE}"
 
-# MQTT broker settings
-MQTT_HOST=$(jq -r '.mqtt.host // "localhost"' "$CONFIG")
-MQTT_PORT=$(jq -r '.mqtt.port // 1883'        "$CONFIG")
-MQTT_USER=$(jq -r '.mqtt.user // ""'           "$CONFIG")
-MQTT_PASS=$(jq -r '.mqtt.pass // ""'           "$CONFIG")
+# MQTT broker settings — per-entry overrides fall back to global
+MQTT_HOST=$(jq -r --argjson e "$ENTRY" '$e.mqtt_host // .mqtt.host // "localhost"' "$CONFIG")
+MQTT_PORT=$(jq -r --argjson e "$ENTRY" '$e.mqtt_port // .mqtt.port // 1883'        "$CONFIG")
+MQTT_USER=$(jq -r --argjson e "$ENTRY" '$e.mqtt_user // .mqtt.user // ""'           "$CONFIG")
+MQTT_PASS=$(jq -r --argjson e "$ENTRY" '$e.mqtt_pass // .mqtt.pass // ""'           "$CONFIG")
 
 # ── Execute action ─────────────────────────────────────────────────────────────
 

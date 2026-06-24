@@ -67,6 +67,43 @@ $v = fn($f, $d = '') => htmlspecialchars($entry[$f] ?? $d);
       </div>
     </div>
 
+    <div id="row-mqtt-overrides" style="display:none">
+      <hr>
+      <h6>MQTT Broker Override <small class="text-muted font-weight-normal">(leave blank to use global Settings)</small></h6>
+
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Host</label>
+        <div class="col-sm-4">
+          <input type="text" class="form-control" name="mqtt_host" value="<?= $v('mqtt_host') ?>"
+                 placeholder="e.g. 192.168.1.100  (blank = global)">
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Port</label>
+        <div class="col-sm-2">
+          <input type="number" class="form-control" name="mqtt_port" value="<?= $v('mqtt_port') ?>"
+                 placeholder="1883">
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Username</label>
+        <div class="col-sm-3">
+          <input type="text" class="form-control" name="mqtt_user" value="<?= $v('mqtt_user') ?>"
+                 placeholder="(blank = global)">
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Password</label>
+        <div class="col-sm-3">
+          <input type="password" class="form-control" name="mqtt_pass" value="<?= $v('mqtt_pass') ?>"
+                 placeholder="(blank = global)">
+        </div>
+      </div>
+    </div>
+
     <hr>
     <h6>Announcement</h6>
 
