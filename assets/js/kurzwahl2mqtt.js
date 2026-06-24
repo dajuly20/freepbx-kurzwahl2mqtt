@@ -4,6 +4,17 @@
 
   var ajaxUrl = 'ajax.php';
 
+  function showFlash(msg) {
+    $('<div id="k2m-flash" class="alert alert-success">')
+      .css({ position: 'fixed', top: '70px', right: '24px', zIndex: 9999,
+             minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,.25)' })
+      .text(msg)
+      .appendTo('body');
+    setTimeout(function () {
+      $('#k2m-flash').fadeOut(300, function () { $(this).remove(); });
+    }, 1800);
+  }
+
   function fpbxAjax(command, data, callback) {
     $.post(ajaxUrl, $.extend({ module: 'kurzwahl2mqtt', command: command }, data), callback, 'json');
   }
@@ -39,7 +50,8 @@
     }, {});
     fpbxAjax('save', data, function (res) {
       if (res.status) {
-        window.location.href = '?display=kurzwahl2mqtt';
+        showFlash('Entry saved');
+        setTimeout(function () { window.location.href = '?display=kurzwahl2mqtt'; }, 800);
       } else {
         alert('Error: ' + res.message);
       }
@@ -55,7 +67,8 @@
     }, {});
     fpbxAjax('saveSettings', data, function (res) {
       if (res.status) {
-        window.location.href = '?display=kurzwahl2mqtt';
+        showFlash('Settings saved');
+        setTimeout(function () { window.location.href = '?display=kurzwahl2mqtt&view=settings'; }, 800);
       } else {
         alert('Error: ' + res.message);
       }
