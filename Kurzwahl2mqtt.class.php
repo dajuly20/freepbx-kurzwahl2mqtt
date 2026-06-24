@@ -2,7 +2,7 @@
 class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
 
     public function install() {
-        $this->db->exec("CREATE TABLE IF NOT EXISTS kurzwahl2mqtt_entries (
+        $this->FreePBX->Database->exec("CREATE TABLE IF NOT EXISTS kurzwahl2mqtt_entries (
             id INT AUTO_INCREMENT PRIMARY KEY,
             code VARCHAR(20) NOT NULL,
             label VARCHAR(100) DEFAULT '',
@@ -16,7 +16,7 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
             UNIQUE KEY unique_code (code)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        $this->db->exec("CREATE TABLE IF NOT EXISTS kurzwahl2mqtt_settings (
+        $this->FreePBX->Database->exec("CREATE TABLE IF NOT EXISTS kurzwahl2mqtt_settings (
             `key` VARCHAR(50) NOT NULL PRIMARY KEY,
             `value` TEXT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -28,7 +28,7 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
             'mqtt_user' => '',
             'mqtt_pass' => '',
         ];
-        $sth = $this->db->prepare(
+        $sth = $this->FreePBX->Database->prepare(
             "INSERT IGNORE INTO kurzwahl2mqtt_settings (`key`, `value`) VALUES (?, ?)"
         );
         foreach ($defaults as $k => $v) {
@@ -37,8 +37,8 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
     }
 
     public function uninstall() {
-        $this->db->exec("DROP TABLE IF EXISTS kurzwahl2mqtt_entries");
-        $this->db->exec("DROP TABLE IF EXISTS kurzwahl2mqtt_settings");
+        $this->FreePBX->Database->exec("DROP TABLE IF EXISTS kurzwahl2mqtt_entries");
+        $this->FreePBX->Database->exec("DROP TABLE IF EXISTS kurzwahl2mqtt_settings");
         @unlink('/etc/asterisk/kurzwahl2mqtt.json');
         @unlink('/etc/asterisk/kurzwahl2mqtt_dialplan.conf');
     }
@@ -46,13 +46,13 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
     // ── CRUD ─────────────────────────────────────────────────────────────────
 
     public function getEntries() {
-        return $this->db->query(
+        return $this->FreePBX->Database->query(
             "SELECT * FROM kurzwahl2mqtt_entries ORDER BY code"
         )->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getEntry($id) {
-        $sth = $this->db->prepare(
+        $sth = $this->FreePBX->Database->prepare(
             "SELECT * FROM kurzwahl2mqtt_entries WHERE id = ?"
         );
         $sth->execute([$id]);
@@ -66,14 +66,14 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
 
         if (!empty($data['id'])) {
             $set = implode(', ', array_map(fn($f) => "$f = ?", $fields));
-            $sth = $this->db->prepare(
+            $sth = $this->FreePBX->Database->prepare(
                 "UPDATE kurzwahl2mqtt_entries SET $set WHERE id = ?"
             );
             $sth->execute([...$values, $data['id']]);
         } else {
             $cols = implode(', ', $fields);
             $ph   = implode(', ', array_fill(0, count($fields), '?'));
-            $sth  = $this->db->prepare(
+            $sth  = $this->FreePBX->Database->prepare(
                 "INSERT INTO kurzwahl2mqtt_entries ($cols) VALUES ($ph)"
             );
             $sth->execute($values);
@@ -81,7 +81,7 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
     }
 
     public function deleteEntry($id) {
-        $sth = $this->db->prepare(
+        $sth = $this->FreePBX->Database->prepare(
             "DELETE FROM kurzwahl2mqtt_entries WHERE id = ?"
         );
         $sth->execute([$id]);
@@ -90,14 +90,14 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
     // ── Settings ─────────────────────────────────────────────────────────────
 
     public function getSettings() {
-        $rows = $this->db->query(
+        $rows = $this->FreePBX->Database->query(
             "SELECT `key`, `value` FROM kurzwahl2mqtt_settings"
         )->fetchAll(PDO::FETCH_ASSOC);
         return array_column($rows, 'value', 'key');
     }
 
     public function saveSetting($key, $value) {
-        $sth = $this->db->prepare(
+        $sth = $this->FreePBX->Database->prepare(
             "INSERT INTO kurzwahl2mqtt_settings (`key`, `value`) VALUES (?, ?)
              ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)"
         );

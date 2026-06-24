@@ -29,6 +29,18 @@ command -v mosquitto_pub &>/dev/null || warn "mosquitto_pub not found — MQTT a
 command -v flite         &>/dev/null || warn "flite not found — TTS announcements won't work. Run: apt install flite"
 command -v fwconsole     &>/dev/null || err "fwconsole not found — is this a FreePBX server?"
 
+# ── Cleanup previous install (safe: all steps skip gracefully if not present) ─
+echo "Cleaning up previous install…"
+fwconsole ma uninstall kurzwahl2mqtt 2>&1 | grep -iv "not found" || true
+fwconsole ma remove    kurzwahl2mqtt 2>&1 | grep -iv "not found" || true
+# Clean up any broken setattribute state left by a previous failed install attempt
+fwconsole ma uninstall setattribute 2>&1 | grep -iv "not found" | grep -iv "not installed" || true
+fwconsole ma remove    setattribute 2>&1 | grep -iv "not found" | grep -iv "not installed" || true
+rm -rf "$MODULE_DIR"
+rm -f  "${AGI_DIR}/kurzwahl2mqtt.sh"
+[[ -f "$CUSTOM_CONF" ]] && sed -i "\|^${INCLUDE_LINE}$|d" "$CUSTOM_CONF" || true
+ok "Previous install cleaned up"
+
 # ── AGI script ────────────────────────────────────────────────────────────────
 echo "Installing AGI script…"
 install -m 755 -o asterisk -g asterisk \
@@ -61,20 +73,19 @@ fi
 
 # ── FreePBX module register ───────────────────────────────────────────────────
 echo "Registering module…"
-# Try fwconsole ma install first; fall back to reload-only if it fails
-if fwconsole ma install kurzwahl2mqtt 2>&1 | grep -qiE "error|exception|unable"; then
-    warn "'fwconsole ma install' failed — falling back to chown + reload"
-fi
+fwconsole ma install kurzwahl2mqtt 2>&1
+ok "Module installed"
+
+# ── Apply config + reload dialplan ───────────────────────────────────────────
+echo "Applying config…"
 fwconsole chown --quiet 2>/dev/null || true
 fwconsole reload 2>&1 | tail -3
 ok "FreePBX reloaded"
 
+echo "Reloading Asterisk dialplan…"
+asterisk -rx 'dialplan reload' 2>&1
+ok "Dialplan reloaded"
+
 echo ""
-echo -e "${GREEN}Done!${NC}"
-echo "→ FreePBX GUI → Admin → Module Admin → scroll to 'Kurzwahl2MQTT' → Install"
-echo "  (if it doesn't appear, try: fwconsole ma list | grep kurzwahl)"
-echo ""
-echo "After installing via GUI, add entries under Admin → Kurzwahl2MQTT,"
-echo "click 'Apply Config', then run:"
-echo "  asterisk -rx 'dialplan reload'"
+echo -e "${GREEN}Done!${NC} Add entries under Admin → Kurzwahl2MQTT, then click 'Apply Config'."
 echo ""
