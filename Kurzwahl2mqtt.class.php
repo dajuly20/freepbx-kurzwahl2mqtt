@@ -152,6 +152,8 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
         return true;
     }
 
+    public function doConfigPageInit($page) {}
+
     // Called by FreePBX Apply Config
     public function genConfig() {
         $this->generateConfig();
