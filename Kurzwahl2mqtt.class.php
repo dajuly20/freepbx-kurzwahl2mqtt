@@ -167,27 +167,31 @@ class Kurzwahl2mqtt extends FreePBX_Helpers implements BMO {
 
     public function ajaxHandler() {
         $cmd = $_REQUEST['command'] ?? '';
-        switch ($cmd) {
-            case 'save':
-                $this->saveEntry($_POST);
-                return ['status' => true, 'message' => 'Saved'];
+        try {
+            switch ($cmd) {
+                case 'save':
+                    $this->saveEntry($_POST);
+                    return ['status' => true, 'message' => 'Saved'];
 
-            case 'delete':
-                $this->deleteEntry($_POST['id'] ?? 0);
-                return ['status' => true, 'message' => 'Deleted'];
+                case 'delete':
+                    $this->deleteEntry($_POST['id'] ?? 0);
+                    return ['status' => true, 'message' => 'Deleted'];
 
-            case 'saveSettings':
-                foreach (['prefix','mqtt_host','mqtt_port','mqtt_user','mqtt_pass'] as $key) {
-                    if (array_key_exists($key, $_POST)) {
-                        $this->saveSetting($key, $_POST[$key]);
+                case 'saveSettings':
+                    foreach (['prefix','mqtt_host','mqtt_port','mqtt_user','mqtt_pass'] as $key) {
+                        if (array_key_exists($key, $_POST)) {
+                            $this->saveSetting($key, $_POST[$key]);
+                        }
                     }
-                }
-                $this->generateConfig();
-                return ['status' => true, 'message' => 'Settings saved'];
+                    $this->generateConfig();
+                    return ['status' => true, 'message' => 'Settings saved'];
 
-            case 'applyConfig':
-                $ok = $this->generateConfig();
-                return ['status' => $ok, 'message' => $ok ? 'Config generated' : 'Error'];
+                case 'applyConfig':
+                    $ok = $this->generateConfig();
+                    return ['status' => $ok, 'message' => $ok ? 'Config generated' : 'Error'];
+            }
+        } catch (\Exception $e) {
+            return ['status' => false, 'message' => $e->getMessage()];
         }
         return ['status' => false, 'message' => 'Unknown command'];
     }

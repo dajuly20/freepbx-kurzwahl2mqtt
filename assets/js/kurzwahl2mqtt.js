@@ -16,7 +16,10 @@
   }
 
   function fpbxAjax(command, data, callback) {
-    $.post(ajaxUrl, $.extend({ module: 'kurzwahl2mqtt', command: command }, data), callback, 'json');
+    $.post(ajaxUrl, $.extend({ module: 'kurzwahl2mqtt', command: command }, data), callback, 'json')
+      .fail(function (xhr) {
+        alert('AJAX error (' + xhr.status + '): ' + (xhr.responseText || 'no response'));
+      });
   }
 
   // ── Grid: Delete ──────────────────────────────────────────────────────────
