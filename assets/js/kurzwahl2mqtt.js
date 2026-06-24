@@ -2,7 +2,7 @@
 (function ($) {
   'use strict';
 
-  var ajaxUrl = 'ajax.php';
+  var ajaxUrl = (typeof FreePBX !== 'undefined' && FreePBX.ajaxurl) ? FreePBX.ajaxurl : 'ajax.php';
 
   function showFlash(msg) {
     $('<div id="k2m-flash" class="alert alert-success">')
@@ -45,13 +45,19 @@
   });
 
   // ── Form: Save ────────────────────────────────────────────────────────────
-  $(document).on('submit', '#entry-form', function (e) {
-    e.preventDefault();
-    var data = $(this).serializeArray().reduce(function (obj, item) {
+  $(document).on('click', '#btn-save-entry', function () {
+    var form = document.getElementById('entry-form');
+    if (form && !form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    var $btn = $(this).prop('disabled', true).text('Saving…');
+    var data = $('#entry-form').serializeArray().reduce(function (obj, item) {
       obj[item.name] = item.value;
       return obj;
     }, {});
     fpbxAjax('save', data, function (res) {
+      $btn.prop('disabled', false).text('Save');
       if (res.status) {
         showFlash('Entry saved');
         setTimeout(function () { window.location.href = '?display=kurzwahl2mqtt'; }, 800);
@@ -62,13 +68,14 @@
   });
 
   // ── Settings: Save ────────────────────────────────────────────────────────
-  $(document).on('submit', '#settings-form', function (e) {
-    e.preventDefault();
-    var data = $(this).serializeArray().reduce(function (obj, item) {
+  $(document).on('click', '#btn-save-settings', function () {
+    var $btn = $(this).prop('disabled', true).text('Saving…');
+    var data = $('#settings-form').serializeArray().reduce(function (obj, item) {
       obj[item.name] = item.value;
       return obj;
     }, {});
     fpbxAjax('saveSettings', data, function (res) {
+      $btn.prop('disabled', false).text('Save & Apply');
       if (res.status) {
         showFlash('Settings saved');
         setTimeout(function () { window.location.href = '?display=kurzwahl2mqtt&view=settings'; }, 800);

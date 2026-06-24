@@ -104,7 +104,7 @@ $v = fn($f, $d = '') => htmlspecialchars($entry[$f] ?? $d);
 
     <div class="form-group row">
       <div class="col-sm-10 offset-sm-2">
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" id="btn-save-entry" class="btn btn-primary">Save</button>
         <a href="<?= $baseUrl ?>" class="btn btn-secondary ml-2">Cancel</a>
       </div>
     </div>

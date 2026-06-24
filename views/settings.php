@@ -52,7 +52,7 @@ $v = fn($k, $d = '') => htmlspecialchars($settings[$k] ?? $d);
 
     <div class="form-group row">
       <div class="col-sm-10 offset-sm-2">
-        <button type="submit" class="btn btn-primary">Save &amp; Apply</button>
+        <button type="button" id="btn-save-settings" class="btn btn-primary">Save &amp; Apply</button>
         <a href="<?= $baseUrl ?>" class="btn btn-secondary ml-2">Back</a>
       </div>
     </div>
