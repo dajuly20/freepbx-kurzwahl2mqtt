@@ -2,7 +2,7 @@
 
 FreePBX module that turns short dial codes into HTTP/MQTT actions with optional voice announcement.
 
-**Dial `8` + code → fires action → plays announcement → hangs up.**
+**Dial `8` + code (or `*8` + code) → fires action → plays announcement → hangs up.**
 
 Example: dial `86736` (= `8` + `OPEN` on keypad) → posts to MQTT topic `home/door/trigger` → flite speaks "Tür wurde geöffnet".
 
@@ -10,8 +10,13 @@ Example: dial `86736` (= `8` + `OPEN` on keypad) → posts to MQTT topic `home/d
 
 - Configure any number of speed dial codes via FreePBX GUI
 - Action types: **MQTT publish**, **HTTP GET**, **HTTP POST** (with custom headers)
-- Announcement types: **TTS via flite**, **pre-recorded sound file**, or **none**
-- `{CODE}` placeholder in payload is replaced with the dialed digits
+- Announcement types: **TTS via Home Assistant** (German voice, cached; config `/etc/asterisk/nummernplan-ha.env`, falls back to flite), **pre-recorded sound file**, or **none**
+- Codes as **vanity words**: enter `OPEN`, the module stores `6736` (keypad letters) and shows both
+- Every code gets **exact dialplan entries** (`8<code>` and optionally `*8<code>`) – no catch-all pattern,
+  so other numbers starting with the prefix keep working
+- **Collision check** on save: extensions, feature codes, duplicate codes and codes that start like another
+- Placeholders in target and payload: `{CODE}` digits, `{WORD}` vanity word, `{CALLER}` calling extension
+  (e.g. topic `pbx2026/kurzwahl/{WORD}`)
 - Configurable prefix (default: `8`), MQTT broker credentials
 - Apply Config button regenerates `/etc/asterisk/kurzwahl2mqtt.json` on demand
 
@@ -58,7 +63,7 @@ sudo ./uninstall.sh
 
 ### Re-running the installer
 
-`install.sh` is idempotent — it cleans up any previous install before reinstalling, so you can run it again safely after updates.
+`install.sh` updates in place and keeps all entries and settings. `sudo ./install.sh --clean` uninstalls first and **deletes all entries**.
 
 ## First Use (step by step)
 

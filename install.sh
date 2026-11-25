@@ -1,6 +1,8 @@
 #!/bin/bash
 # kurzwahl2mqtt installer
 # Copies files into FreePBX, installs the module, and patches extensions_custom.conf
+# Default: update in place – existing entries and settings are kept.
+# --clean: uninstall first (DROPS all entries and settings!), then fresh install.
 
 set -euo pipefail
 
@@ -29,17 +31,21 @@ command -v mosquitto_pub &>/dev/null || warn "mosquitto_pub not found — MQTT a
 command -v flite         &>/dev/null || warn "flite not found — TTS announcements won't work. Run: apt install flite"
 command -v fwconsole     &>/dev/null || err "fwconsole not found — is this a FreePBX server?"
 
-# ── Cleanup previous install (safe: all steps skip gracefully if not present) ─
-echo "Cleaning up previous install…"
-fwconsole ma uninstall kurzwahl2mqtt 2>&1 | grep -iv "not found" || true
-fwconsole ma remove    kurzwahl2mqtt 2>&1 | grep -iv "not found" || true
-# Clean up any broken setattribute state left by a previous failed install attempt
-fwconsole ma uninstall setattribute 2>&1 | grep -iv "not found" | grep -iv "not installed" || true
-fwconsole ma remove    setattribute 2>&1 | grep -iv "not found" | grep -iv "not installed" || true
-rm -rf "$MODULE_DIR"
-rm -f  "${AGI_DIR}/kurzwahl2mqtt.sh"
-[[ -f "$CUSTOM_CONF" ]] && sed -i "\|^${INCLUDE_LINE}$|d" "$CUSTOM_CONF" || true
-ok "Previous install cleaned up"
+# ── Cleanup previous install – only with --clean (drops entries!) ─────────────
+if [[ "${1:-}" == "--clean" ]]; then
+    echo "Cleaning up previous install (--clean: entries and settings are deleted)…"
+    fwconsole ma uninstall kurzwahl2mqtt 2>&1 | grep -iv "not found" || true
+    fwconsole ma remove    kurzwahl2mqtt 2>&1 | grep -iv "not found" || true
+    # Clean up any broken setattribute state left by a previous failed install attempt
+    fwconsole ma uninstall setattribute 2>&1 | grep -iv "not found" | grep -iv "not installed" || true
+    fwconsole ma remove    setattribute 2>&1 | grep -iv "not found" | grep -iv "not installed" || true
+    rm -rf "$MODULE_DIR"
+    rm -f  "${AGI_DIR}/kurzwahl2mqtt.sh"
+    [[ -f "$CUSTOM_CONF" ]] && sed -i "\|^${INCLUDE_LINE}$|d" "$CUSTOM_CONF" || true
+    ok "Previous install cleaned up"
+else
+    ok "Update in place – existing entries are kept (use --clean for a fresh install)"
+fi
 
 # ── AGI script ────────────────────────────────────────────────────────────────
 echo "Installing AGI script…"
@@ -47,11 +53,13 @@ install -m 755 -o asterisk -g asterisk \
     "${SCRIPT_DIR}/agi-bin/kurzwahl2mqtt.sh" \
     "${AGI_DIR}/kurzwahl2mqtt.sh"
 ok "AGI script → ${AGI_DIR}/kurzwahl2mqtt.sh"
+install -d -o asterisk -g asterisk -m 755 /var/lib/asterisk/sounds/custom/kurzwahl2mqtt
+ok "TTS-Cache → /var/lib/asterisk/sounds/custom/kurzwahl2mqtt (HA-TTS über /etc/asterisk/nummernplan-ha.env, sonst flite)"
 
 # ── Module files ──────────────────────────────────────────────────────────────
 echo "Copying module to FreePBX…"
 mkdir -p "$MODULE_DIR"
-rsync -a --exclude='.git' --exclude='install.sh' --exclude='agi-bin' \
+rsync -a --delete --exclude='.git' --exclude='install.sh' --exclude='agi-bin' \
     "${SCRIPT_DIR}/" "${MODULE_DIR}/"
 chown -R asterisk:asterisk "$MODULE_DIR"
 ok "Module → ${MODULE_DIR}"
@@ -86,6 +94,12 @@ echo "Registering module…"
 fwconsole ma install kurzwahl2mqtt 2>&1
 ok "Module installed"
 
+# ── Generate config from the database (entries survive updates) ─────────────
+echo "Generating config…"
+php -r '$bootstrap_settings["freepbx_auth"]=false; include "/etc/freepbx.conf"; FreePBX::Kurzwahl2mqtt()->generateConfig();'
+chown asterisk:asterisk /etc/asterisk/kurzwahl2mqtt.json /etc/asterisk/kurzwahl2mqtt_dialplan.conf
+ok "Config generated"
+
 # ── Apply config + reload dialplan ───────────────────────────────────────────
 echo "Applying config…"
 fwconsole chown --quiet 2>/dev/null || true
@@ -97,5 +111,7 @@ asterisk -rx 'dialplan reload' 2>&1
 ok "Dialplan reloaded"
 
 echo ""
+echo "Kurzwahlen jetzt:"
+grep -E '^exten => \*?[0-9]' /etc/asterisk/kurzwahl2mqtt_dialplan.conf | sed 's/^/   /'
 echo -e "${GREEN}Done!${NC} Add entries under Admin → Kurzwahl2MQTT, then click 'Apply Config'."
 echo ""

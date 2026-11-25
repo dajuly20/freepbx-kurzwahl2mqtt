@@ -23,6 +23,16 @@ $v = fn($k, $d = '') => htmlspecialchars($settings[$k] ?? $d);
     <h6>MQTT Broker (used for MQTT actions)</h6>
 
     <div class="form-group row">
+      <label class="col-sm-2 col-form-label">Auch mit Stern</label>
+      <div class="col-sm-3">
+        <select class="form-control" name="star">
+          <option value="1" <?= $v('star', '1') === '1' ? 'selected' : '' ?>>Ja – zusätzlich *<?= $v('prefix', '8') ?>…</option>
+          <option value="0" <?= $v('star', '1') === '0' ? 'selected' : '' ?>>Nein</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group row">
       <label class="col-sm-2 col-form-label">Host</label>
       <div class="col-sm-4">
         <input type="text" class="form-control" name="mqtt_host" value="<?= $v('mqtt_host', 'localhost') ?>">

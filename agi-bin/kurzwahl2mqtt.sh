@@ -1,6 +1,6 @@
 #!/bin/bash
 # AGI script for kurzwahl2mqtt
-# Called by Asterisk with the dialed code as $1 (digits after prefix)
+# Called by Asterisk with the dialed code as $1 (digits after prefix) and the caller as $2
 
 set -euo pipefail
 
@@ -8,6 +8,7 @@ set -euo pipefail
 while IFS= read -r line && [[ "$line" != "" ]]; do :; done
 
 CODE="${1:-}"
+CALLER="${2:-}"
 CONFIG="/etc/asterisk/kurzwahl2mqtt.json"
 TMPFILE="/tmp/k2m_$$"
 
@@ -54,8 +55,15 @@ ACTION_PAYLOAD=$(echo "$ENTRY" | jq -r '.action_payload // ""')
 ANNOUNCE_TYPE=$(echo "$ENTRY"  | jq -r '.announce_type')
 ANNOUNCE_VALUE=$(echo "$ENTRY" | jq -r '.announce_value // ""')
 
-# Replace {CODE} placeholder in payload
-ACTION_PAYLOAD="${ACTION_PAYLOAD//\{CODE\}/$CODE}"
+WORD=$(echo "$ENTRY" | jq -r '.word // ""')
+
+# Platzhalter in Ziel und Payload: {CODE} Ziffern, {WORD} Vanity-Wort (sonst Ziffern), {CALLER} Nebenstelle
+[[ -z "$WORD" ]] && WORD="$CODE"
+for v in ACTION_PAYLOAD ACTION_TARGET; do
+    val="${!v}"
+    val="${val//\{CODE\}/$CODE}"; val="${val//\{WORD\}/$WORD}"; val="${val//\{CALLER\}/$CALLER}"
+    printf -v "$v" '%s' "$val"
+done
 
 # MQTT broker settings
 MQTT_HOST=$(jq -r '.mqtt.host // "localhost"' "$CONFIG")
@@ -99,10 +107,41 @@ esac
 
 case "$ANNOUNCE_TYPE" in
     tts)
-        if [[ -n "$ANNOUNCE_VALUE" ]] && command -v flite &>/dev/null; then
-            flite -t "$ANNOUNCE_VALUE" -o "${TMPFILE}.wav" &>/dev/null
-            echo "STREAM FILE ${TMPFILE} ''"
-            read -r _AGI_RESPONSE || true
+        # Bevorzugt Home-Assistant-TTS (deutsche Stimme), Ergebnis wird pro Text zwischengespeichert.
+        # Zugang: /etc/asterisk/nummernplan-ha.env (HA_URL, HA_TOKEN, TTS_ENGINE, TTS_LANG, TTS_VOICE).
+        # Rückfall: flite (nur englische Stimme).
+        if [[ -n "$ANNOUNCE_VALUE" ]]; then
+            HAENV=/etc/asterisk/nummernplan-ha.env
+            CACHE=/var/lib/asterisk/sounds/custom/kurzwahl2mqtt
+            played=0
+            if [[ -r "$HAENV" ]] && command -v sox &>/dev/null; then
+                # shellcheck disable=SC1090
+                source "$HAENV"
+                hash=$(printf '%s|%s' "${TTS_VOICE:-}" "$ANNOUNCE_VALUE" | md5sum | cut -c1-16)
+                if [[ ! -s "$CACHE/$hash.wav" ]]; then
+                    opts='{"preferred_format":"wav","preferred_sample_rate":8000,"preferred_sample_channels":1}'
+                    [[ -n "${TTS_VOICE:-}" ]] && opts=$(jq -c --arg v "$TTS_VOICE" '. + {voice:$v}' <<<"$opts")
+                    req=$(jq -cn --arg e "${TTS_ENGINE:-tts.home_assistant_cloud}" --arg m "$ANNOUNCE_VALUE" \
+                          --arg l "${TTS_LANG:-de-DE}" --argjson o "$opts" '{engine_id:$e, message:$m, language:$l, options:$o}')
+                    url=$(curl -sf --max-time 8 -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" \
+                          -d "$req" "$HA_URL/api/tts_get_url" | jq -r '.url // empty')
+                    if [[ -n "$url" ]] && curl -sf --max-time 10 -o "${TMPFILE}.raw.wav" "$url"; then
+                        mkdir -p "$CACHE"
+                        sox --ignore-length "${TMPFILE}.raw.wav" -r 8000 -c 1 -b 16 "$CACHE/$hash.wav" 2>/dev/null || rm -f "$CACHE/$hash.wav"
+                        rm -f "${TMPFILE}.raw.wav"
+                    fi
+                fi
+                if [[ -s "$CACHE/$hash.wav" ]]; then
+                    echo "STREAM FILE custom/kurzwahl2mqtt/$hash ''"
+                    read -r _AGI_RESPONSE || true
+                    played=1
+                fi
+            fi
+            if (( ! played )) && command -v flite &>/dev/null; then
+                flite -t "$ANNOUNCE_VALUE" -o "${TMPFILE}.wav" &>/dev/null
+                echo "STREAM FILE ${TMPFILE} ''"
+                read -r _AGI_RESPONSE || true
+            fi
         fi
         ;;
 

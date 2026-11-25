@@ -18,6 +18,7 @@ $baseUrl = '?display=kurzwahl2mqtt';
         <thead class="thead-dark">
           <tr>
             <th>Code</th>
+            <th>Wählen</th>
             <th>Label</th>
             <th>Action</th>
             <th>Target</th>
@@ -28,11 +29,12 @@ $baseUrl = '?display=kurzwahl2mqtt';
         </thead>
         <tbody>
         <?php if (empty($entries)): ?>
-          <tr><td colspan="7" class="text-center text-muted">No entries yet. Click "+ Add Entry" to create one.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted">No entries yet. Click "+ Add Entry" to create one.</td></tr>
         <?php else: ?>
           <?php foreach ($entries as $e): ?>
           <tr>
-            <td><code><?= htmlspecialchars($e['code']) ?></code></td>
+            <td><code><?= htmlspecialchars($e['code']) ?></code><?= !empty($e['word']) ? ' <strong>' . htmlspecialchars($e['word']) . '</strong>' : '' ?></td>
+            <td><code><?= htmlspecialchars(implode(' · ', $module->dialStrings($e['code']))) ?></code></td>
             <td><?= htmlspecialchars($e['label']) ?></td>
             <td><span class="badge badge-info"><?= htmlspecialchars($e['action_type']) ?></span></td>
             <td class="text-truncate" style="max-width:200px"><?= htmlspecialchars($e['action_target']) ?></td>

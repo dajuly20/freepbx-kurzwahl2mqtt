@@ -13,10 +13,11 @@ $v = fn($f, $d = '') => htmlspecialchars($entry[$f] ?? $d);
     <input type="hidden" name="id" value="<?= $id ?>">
 
     <div class="form-group row">
-      <label class="col-sm-2 col-form-label">Code <small class="text-muted">(digits after prefix)</small></label>
+      <label class="col-sm-2 col-form-label">Code <small class="text-muted">(Wort oder Ziffern nach der Vorwahl)</small></label>
       <div class="col-sm-3">
-        <input type="text" class="form-control" name="code" value="<?= $v('code') ?>"
-               pattern="[0-9]+" required placeholder="e.g. 6736">
+        <input type="text" class="form-control" name="code" value="<?= htmlspecialchars(($entry['word'] ?? '') ?: ($entry['code'] ?? '')) ?>"
+               pattern="[0-9A-Za-z]+" required placeholder="z. B. OPEN oder 6736">
+        <small class="form-text text-muted">Buchstaben werden wie auf der Telefontastatur umgerechnet: OPEN = 6736.</small>
       </div>
     </div>
 
